@@ -48,7 +48,10 @@ h1{margin:0;font-size:1.7rem;font-weight:800;letter-spacing:-.01em}
 }
 .board-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
 .board-head h2{margin:0;font-size:1rem;font-weight:500}
-.board-head span{font-size:.85rem;color:var(--on-felt-muted)}
+.deal{display:flex;gap:6px}
+.deal button{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:var(--on-felt);border-radius:9px;padding:6px 12px;font-size:.88rem;font-weight:500}
+.deal button:disabled{opacity:.4;cursor:not-allowed}
+.board-head{align-items:center}
 .board{display:flex;justify-content:center;gap:6px;direction:ltr}
 .board .gap{width:8px}
 
@@ -183,7 +186,7 @@ h1{margin:0;font-size:1.7rem;font-weight:800;letter-spacing:-.01em}
   </header>
 
   <section class="table" aria-label="בורד">
-    <div class="board-head"><h2>בורד</h2><span>פלופ, טרן, ריבר</span></div>
+    <div class="board-head"><h2>בורד</h2><div class="deal"><button id="dealBtn">פלופ אקראי</button><button id="clearBoard">נקה בורד</button></div></div>
     <div class="board" id="board"></div>
   </section>
 
@@ -385,6 +388,10 @@ function render(){
   let bh='';
   state.board.forEach((c,j)=>{ if(j===3||j===4) bh+='<span class="gap"></span>'; bh+=cardHTML(c,`data-b="${j}"`,isActive('b',0,j)); });
   $('board').innerHTML=bh;
+  const nb=state.board.filter(c=>c!==null).length, nf3=state.board.slice(0,3).filter(c=>c!==null).length;
+  $('dealBtn').textContent=nf3<3?'פלופ אקראי':state.board[3]===null?'טרן אקראי':'ריבר אקראי';
+  $('dealBtn').disabled=nb===5;
+  $('clearBoard').disabled=nb===0;
 
   const known=state.board.filter(c=>c!==null);
   const plo=state.mode==='plo';
@@ -527,6 +534,14 @@ document.querySelectorAll('.toggle button').forEach(b=>b.onclick=()=>{
 });
 $('add').onclick=()=>{if(state.players.length<9){state.players.push(newPlayer());state.ranges.push(null);results=null;render();schedule();}};
 $('reset').onclick=()=>{state.players=[newPlayer(),newPlayer()];state.ranges=[null,null];state.hero=0;state.board=[null,null,null,null,null];results=null;render();schedule();};
+$('dealBtn').onclick=()=>{
+  const used=usedCards(), deck=[];
+  for(let c=0;c<52;c++) if(!used.has(c)) deck.push(c);
+  const slots=state.board.slice(0,3).some(c=>c===null)?[0,1,2]:state.board[3]===null?[3]:[4];
+  for(const j of slots){ if(state.board[j]!==null) continue; const x=Math.floor(Math.random()*deck.length); state.board[j]=deck.splice(x,1)[0]; }
+  results=null;render();schedule();
+};
+$('clearBoard').onclick=()=>{state.board=[null,null,null,null,null];results=null;render();schedule();};
 $('hero').onchange=e=>{state.hero=+e.target.value;render();};
 $('pot').oninput=paintOdds;
 $('call').oninput=paintOdds;
