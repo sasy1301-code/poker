@@ -90,6 +90,45 @@ h1{margin:0;font-size:1.7rem;font-weight:800;letter-spacing:-.01em}
 .olist{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;direction:ltr;justify-content:flex-end}
 .oc{background:var(--cardface);color:var(--cardink);border:1px solid var(--line);border-radius:5px;padding:2px 5px;font-weight:500;font-size:.85rem}
 .oc.red{color:var(--cardred)}
+.p-ctrl{display:flex;align-items:center;gap:6px}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:4px 10px;font-size:.82rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--felt);color:var(--on-felt)}
+.rangebtn{
+  border:2px dashed var(--line);background:transparent;border-radius:10px;padding:8px 10px;
+  text-align:start;min-width:112px;max-width:170px;line-height:1.3
+}
+.rangebtn b{display:block;font-size:1.05rem}
+.rangebtn span{display:block;font-size:.78rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rangebtn.set{border-style:solid;border-color:var(--felt)}
+
+.odds{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 12px}
+.odds h2{margin:0 0 10px;font-size:1.05rem;font-weight:700}
+.odds-in{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.odds label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted)}
+.odds input,.odds select{
+  font:inherit;font-size:1rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);
+  border-radius:9px;padding:8px;width:100%;min-width:0
+}
+.odds input:focus-visible,.odds select:focus-visible{outline:3px solid var(--focus);outline-offset:1px}
+.odds-out{margin-top:12px;font-size:.95rem}
+.verdict{font-size:1.25rem;font-weight:800;margin-bottom:2px}
+.verdict.good{color:var(--felt)}
+.verdict.bad{color:var(--cardred)}
+@media (prefers-color-scheme: dark){.verdict.good{color:#5CC593}.verdict.bad{color:#F07178}}
+.odds-out .sub{color:var(--muted);font-size:.88rem;font-variant-numeric:tabular-nums}
+
+.rtools{display:flex;align-items:center;gap:10px;margin:0 4px 10px;font-size:.88rem;color:var(--muted);white-space:nowrap}
+.rtools input[type=range]{flex:1;accent-color:var(--felt)}
+.rtools output{text-align:end;font-variant-numeric:tabular-nums;color:var(--ink)}
+.rgrid{display:grid;grid-template-columns:repeat(13,1fr);gap:2px;direction:ltr;touch-action:none;user-select:none;-webkit-user-select:none}
+.rc{
+  border:0;border-radius:3px;padding:0;aspect-ratio:1/1;font-size:clamp(.5rem,2.3vw,.78rem);font-weight:500;
+  background:var(--bg);color:var(--muted);display:flex;align-items:center;justify-content:center;min-width:0
+}
+.rc.pair{background:color-mix(in srgb,var(--accent) 14%,var(--bg))}
+.rc.suit{background:color-mix(in srgb,var(--felt) 10%,var(--bg))}
+.rc.on{background:var(--felt);color:var(--on-felt)}
 .odanger{margin-top:10px}
 .odanger .oc{border-color:var(--cardred)}
 
@@ -155,7 +194,18 @@ h1{margin:0;font-size:1.7rem;font-weight:800;letter-spacing:-.01em}
     <button class="btn" id="add">הוסף שחקן</button>
     <button class="btn" id="reset">נקה הכול</button>
   </div>
-  <p class="hint">קלף שלא נבחר נחשב כאקראי, כך שאפשר להשאיר שחקן בלי קלפים כדי לבדוק מול יד אקראית. החישוב מתעדכן אוטומטית. היציאות מוצגות בפלופ ובטרן כשהקלפים של כל השחקנים ידועים, והן סופרות את הקלף הבא בלבד.</p>
+
+  <section class="odds" aria-labelledby="oddsTitle">
+    <h2 id="oddsTitle">פוט אודס</h2>
+    <div class="odds-in">
+      <label>קופה כולל ההימור<input id="pot" type="number" inputmode="decimal" min="0" placeholder="למשל 150"></label>
+      <label>כמה לשלם<input id="call" type="number" inputmode="decimal" min="0" placeholder="למשל 50"></label>
+      <label>השחקן שלי<select id="hero"></select></label>
+    </div>
+    <div class="odds-out" id="oddsOut" aria-live="polite"></div>
+  </section>
+
+  <p class="hint">קלף שלא נבחר נחשב כאקראי, כך שאפשר להשאיר שחקן בלי קלפים כדי לבדוק מול יד אקראית. בהולדם אפשר לעבור ל"טווח" ולסמן את כל הידיים שהיריב יכול להחזיק. היציאות מוצגות בפלופ ובטרן כשהקלפים של כל השחקנים ידועים, והן סופרות את הקלף הבא בלבד.</p>
 </div>
 
 <div class="backdrop" id="backdrop"></div>
@@ -168,6 +218,22 @@ h1{margin:0;font-size:1.7rem;font-weight:800;letter-spacing:-.01em}
     </div>
   </div>
   <div class="grid" id="grid"></div>
+</div>
+
+<div class="sheet" id="rsheet" role="dialog" aria-modal="true" aria-labelledby="rTitle">
+  <div class="sheet-head">
+    <h3 id="rTitle"></h3>
+    <div class="btns">
+      <button id="rClear">נקה טווח</button>
+      <button id="rClose">סגור</button>
+    </div>
+  </div>
+  <div class="rtools">
+    <label for="rPct">טופ</label>
+    <input id="rPct" type="range" min="0" max="100" step="0.5" value="0">
+    <output id="rInfo"></output>
+  </div>
+  <div class="rgrid" id="rgrid"></div>
 </div>
 
 <script>
@@ -274,10 +340,32 @@ function computeOuts(){
 }
 
 /* ---------- state ---------- */
-const state={mode:'nlh',players:[],board:[null,null,null,null,null],active:null};
+const state={mode:'nlh',players:[],ranges:[],board:[null,null,null,null,null],active:null,rActive:null,hero:0};
 const hs=()=>state.mode==='nlh'?2:4;
 function newPlayer(){return Array(hs()).fill(null);}
 state.players=[newPlayer(),newPlayer()];
+state.ranges=[null,null];
+
+/* ---------- ranges (Hold'em) ---------- */
+const RANK_ORDER="AA KK QQ JJ TT 99 88 AKs 77 AQs AKo AJs AQo ATs AJo KQs 66 ATo KJs KTs A9s A8s KQo A7s A6s KJo A9o QJs 55 A5s K9s A8o KTo QTs A4s A7o A3s Q9s A5o K8s QJo A2s K9o JTs A6o K7s QTo 44 K6s A4o Q8s A3o JTo K5s J9s K7o Q9o K8o K4s A2o K3s J8s T9s Q7s K6o Q8o Q6s 33 K2s K5o J9o J7s Q5s K4o T8s T9o J8o Q4s Q6o K3o Q7o 98s Q3s J6s K2o T7s Q2s 22 J5s Q5o J7o T8o 97s T6s Q3o Q4o J4s J3s 87s 98o T7o J6o 96s J5o J2s T5s Q2o 97o T4s 86s J4o T6o J3o 95s 76s T3s T2s 87o T5o 85s 96o J2o 94s T4o 93s 75s 86o 65s 84s 95o 76o 74s 92s T3o 54s 64s T2o 85o 94o 83s 82s 75o 73s 93o 65o 53s 63s 84o 92o 74o 72s 43s 54o 52s 64o 83o 62s 73o 42s 82o 32s 53o 63o 43o 52o 72o 62o 42o 32o".split(' ');
+const classSize=k=>k.length===2?6:k[2]==='s'?4:12;
+function classCombos(k){
+  const a=RANKS.indexOf(k[0]),b=RANKS.indexOf(k[1]),out=[];
+  for(let s1=0;s1<4;s1++)for(let s2=0;s2<4;s2++){
+    if(k.length===2){ if(s2>s1) out.push([a*4+s1,b*4+s2]); }
+    else if(k[2]==='s'){ if(s1===s2) out.push([a*4+s1,b*4+s2]); }
+    else if(s1!==s2) out.push([a*4+s1,b*4+s2]);
+  }
+  return out;
+}
+const rangeCount=set=>{let n=0;set.forEach(k=>n+=classSize(k));return n;};
+const rangePct=set=>rangeCount(set)/1326*100;
+const label10=k=>k.replace(/T/g,'10');
+function rangeSummary(set){
+  const top=RANK_ORDER.filter(k=>set.has(k)).slice(0,4).map(label10).join(', ');
+  return top+(set.size>4?'…':'');
+}
+const inRange=i=>state.mode==='nlh'&&state.ranges[i]!=null;
 let results=null; // [{eq,win,tie}]
 
 function usedCards(){const s=new Set();state.players.forEach(h=>h.forEach(c=>c!==null&&s.add(c)));state.board.forEach(c=>c!==null&&s.add(c));return s;}
@@ -320,20 +408,46 @@ function render(){
       }
       outsHTML=`<div class="outs">${head}${tie}${list}${danger}</div>`;
     }
+    const rng=inRange(i), set=state.ranges[i];
+    const seg=state.mode==='nlh'?`<div class="seg" role="group" aria-label="סוג קלפים לשחקן ${i+1}">
+        <button data-kind="hand" data-i="${i}" aria-pressed="${!rng}">יד</button>
+        <button data-kind="range" data-i="${i}" aria-pressed="${rng}">טווח</button></div>`:'';
+    const handCell=rng
+      ? `<button class="rangebtn${set.size?' set':''}" data-range="${i}">${set.size
+          ? `<b>${fmt(rangePct(set))}% מהידיים</b><span>${rangeSummary(set)}</span>`
+          : `<b>בחר טווח</b><span>ריק נחשב יד אקראית</span>`}</button>`
+      : h.map((c,j)=>cardHTML(c,`data-p="${i}" data-j="${j}"`,isActive('p',i,j))).join('');
     return `<div class="player" id="pl-${i}">
-      <div class="p-top"><div><span class="p-name">שחקן ${i+1}</span><span class="p-hand">${handName}</span></div>
-      ${state.players.length>2?`<button class="remove" data-rm="${i}" aria-label="הסר שחקן ${i+1}">×</button>`:''}</div>
-      <div class="hand">${h.map((c,j)=>cardHTML(c,`data-p="${i}" data-j="${j}"`,isActive('p',i,j))).join('')}</div>
+      <div class="p-top"><div><span class="p-name">שחקן ${i+1}${i===state.hero?' (אני)':''}</span><span class="p-hand">${handName}</span></div>
+      <div class="p-ctrl">${seg}${state.players.length>2?`<button class="remove" data-rm="${i}" aria-label="הסר שחקן ${i+1}">×</button>`:''}</div></div>
+      <div class="hand">${handCell}</div>
       <div class="res" id="res-${i}"><div class="eq">—</div><div class="wt">&nbsp;</div></div>
       <div class="bar"><i id="bar-${i}"></i></div>
       ${outsHTML}
     </div>`;
   }).join('');
   $('add').disabled=state.players.length>=9;
+  const hsel=$('hero');
+  hsel.innerHTML=state.players.map((_,i)=>`<option value="${i}"${i===state.hero?' selected':''}>שחקן ${i+1}</option>`).join('');
   paintResults();
+}
+function paintOdds(){
+  const out=$('oddsOut');
+  const pot=parseFloat($('pot').value), call=parseFloat($('call').value);
+  if(!(call>0)||!(pot>=0)){out.innerHTML='<div class="sub">הכנס את גודל הקופה ואת הסכום שצריך לשלם, ותראה אם הקול משתלם.</div>';return;}
+  const need=call/(pot+call)*100;
+  const ratio=(pot/call).toFixed(1);
+  if(!results||!results.trials){out.innerHTML=`<div class="sub">צריך לפחות ${fmt(need)}% אקוויטי כדי לשלם (יחס ${ratio} ל-1).</div>`;return;}
+  const eq=results.eq[state.hero]/results.trials*100;
+  const ev=eq/100*(pot+call)-call;
+  const good=eq>=need;
+  const evTxt=(ev>=0?'+':'-')+Math.abs(ev).toFixed(Math.abs(ev)<10?2:1);
+  out.innerHTML=`<div class="verdict ${good?'good':'bad'}">${good?'קול משתלם':'קול לא משתלם'}</div>
+    <div class="sub">יש לך ${fmt(eq)}% ואתה צריך ${fmt(need)}% (יחס ${ratio} ל-1). רווח צפוי מהקול: <bdi dir="ltr">${evTxt}</bdi></div>`;
 }
 function fmt(x){return x.toFixed(x>=10||x===0?1:2);}
 function paintResults(){
+  paintOdds();
   if(!results||results.trials===0) return;
   const n=state.players.length; let lead=-1,best=-1;
   for(let i=0;i<n;i++){const e=results.eq[i]/results.trials;if(e>best){best=e;lead=i;}}
@@ -377,13 +491,30 @@ $('grid').addEventListener('click',e=>{
 });
 $('clearCard').onclick=()=>{setSlot(state.active,null);render();buildGrid();schedule();};
 $('closeSheet').onclick=closePicker;
-$('backdrop').onclick=closePicker;
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.active)closePicker();});
+$('backdrop').onclick=()=>{if(state.rActive!==null)closeRange();else closePicker();};
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(state.rActive!==null)closeRange();else if(state.active)closePicker();});
 
 $('board').addEventListener('click',e=>{const b=e.target.closest('[data-b]');if(b)openPicker({type:'b',j:+b.dataset.b});});
 $('players').addEventListener('click',e=>{
   const rm=e.target.closest('[data-rm]');
-  if(rm){state.players.splice(+rm.dataset.rm,1);results=null;render();schedule();return;}
+  if(rm){
+    const i=+rm.dataset.rm;
+    state.players.splice(i,1);state.ranges.splice(i,1);
+    if(state.hero===i) state.hero=0; else if(state.hero>i) state.hero--;
+    results=null;render();schedule();return;
+  }
+  const kind=e.target.closest('[data-kind]');
+  if(kind){
+    const i=+kind.dataset.i, toRange=kind.dataset.kind==='range';
+    if(toRange===inRange(i)) return;
+    state.ranges[i]=toRange?new Set():null;
+    if(toRange) state.players[i]=newPlayer();
+    results=null;render();schedule();
+    if(toRange) openRange(i);
+    return;
+  }
+  const rb=e.target.closest('[data-range]');
+  if(rb){openRange(+rb.dataset.range);return;}
   const c=e.target.closest('[data-p]');
   if(c) openPicker({type:'p',i:+c.dataset.p,j:+c.dataset.j});
 });
@@ -391,10 +522,75 @@ document.querySelectorAll('.toggle button').forEach(b=>b.onclick=()=>{
   if(state.mode===b.dataset.mode) return;
   state.mode=b.dataset.mode;
   state.players=state.players.map(h=>{const n=newPlayer();for(let j=0;j<Math.min(h.length,n.length);j++)n[j]=h[j];return n;});
+  state.ranges=state.players.map(()=>null);
   results=null;render();schedule();
 });
-$('add').onclick=()=>{if(state.players.length<9){state.players.push(newPlayer());results=null;render();schedule();}};
-$('reset').onclick=()=>{state.players=[newPlayer(),newPlayer()];state.board=[null,null,null,null,null];results=null;render();schedule();};
+$('add').onclick=()=>{if(state.players.length<9){state.players.push(newPlayer());state.ranges.push(null);results=null;render();schedule();}};
+$('reset').onclick=()=>{state.players=[newPlayer(),newPlayer()];state.ranges=[null,null];state.hero=0;state.board=[null,null,null,null,null];results=null;render();schedule();};
+$('hero').onchange=e=>{state.hero=+e.target.value;render();};
+$('pot').oninput=paintOdds;
+$('call').oninput=paintOdds;
+
+/* ---------- range sheet ---------- */
+function cellKey(r,c){ // r,c: 0 = Ace
+  const a=RANKS[12-r],b=RANKS[12-c];
+  if(r===c) return a+a;
+  return r<c? a+b+'s' : b+a+'o';
+}
+function openRange(i){
+  state.rActive=i;
+  $('rTitle').textContent=`טווח של שחקן ${i+1}`;
+  let g='';
+  for(let r=0;r<13;r++)for(let c=0;c<13;c++){
+    const k=cellKey(r,c), cls=r===c?'pair':r<c?'suit':'';
+    g+=`<button class="rc ${cls}" data-k="${k}" aria-label="${label10(k)}">${k}</button>`;
+  }
+  $('rgrid').innerHTML=g;
+  paintRange();
+  $('rsheet').classList.add('open');$('backdrop').classList.add('open');
+}
+function paintRange(){
+  const set=state.ranges[state.rActive]; if(!set) return;
+  document.querySelectorAll('#rgrid .rc').forEach(b=>b.classList.toggle('on',set.has(b.dataset.k)));
+  $('rInfo').textContent=`${fmt(rangePct(set))}%, ${rangeCount(set)} קומבינציות`;
+}
+function closeRange(){state.rActive=null;$('rsheet').classList.remove('open');$('backdrop').classList.remove('open');render();}
+let paint=null;
+function paintCell(el){
+  if(!el||!el.dataset||!el.dataset.k) return;
+  const set=state.ranges[state.rActive];
+  if(paint===null) paint=!set.has(el.dataset.k);
+  if(paint) set.add(el.dataset.k); else set.delete(el.dataset.k);
+  el.classList.toggle('on',paint);
+  $('rInfo').textContent=`${fmt(rangePct(set))}%, ${rangeCount(set)} קומבינציות`;
+}
+$('rgrid').addEventListener('pointerdown',e=>{
+  const el=e.target.closest('.rc'); if(!el) return;
+  e.preventDefault(); paint=null; paintCell(el);
+  $('rgrid').setPointerCapture(e.pointerId);
+});
+$('rgrid').addEventListener('pointermove',e=>{
+  if(paint===null) return;
+  const el=document.elementFromPoint(e.clientX,e.clientY);
+  if(el&&el.classList.contains('rc')){
+    const set=state.ranges[state.rActive];
+    if(set.has(el.dataset.k)!==paint) paintCell(el);
+  }
+});
+const endPaint=()=>{if(paint!==null){paint=null;$('rPct').value=0;schedule();}};
+$('rgrid').addEventListener('pointerup',endPaint);
+$('rgrid').addEventListener('pointercancel',endPaint);
+$('rgrid').addEventListener('keydown',e=>{
+  const el=e.target.closest('.rc'); if(!el||(e.key!=='Enter'&&e.key!==' ')) return;
+  e.preventDefault(); paint=null; paintCell(el); paint=null; schedule();
+});
+$('rPct').addEventListener('input',e=>{
+  const pct=+e.target.value, set=state.ranges[state.rActive]; set.clear();
+  let n=0; for(const k of RANK_ORDER){ if(n>=pct/100*1326-0.5) break; set.add(k); n+=classSize(k); }
+  paintRange(); schedule();
+});
+$('rClear').onclick=()=>{state.ranges[state.rActive].clear();$('rPct').value=0;paintRange();schedule();};
+$('rClose').onclick=closeRange;
 
 /* ---------- calculation ---------- */
 let timer=null,runToken=0;
@@ -406,15 +602,30 @@ function startCalc(){
   const tok=++runToken;
   const n=state.players.length, H_S=hs(), plo=state.mode==='plo';
   const used=usedCards();
-  if(used.size===0){results=null;render();$('status').textContent='בחרו קלפים כדי לראות אחוזים';return;}
+  const rangeP=[];
+  state.players.forEach((_,i)=>{if(inRange(i)&&state.ranges[i].size) rangeP.push(i);});
+  const anyRange=rangeP.length>0;
+  if(used.size===0&&!anyRange){results=null;render();$('status').textContent='בחרו קלפים כדי לראות אחוזים';return;}
   const deck=[];for(let c=0;c<52;c++) if(!used.has(c)) deck.push(c);
   const H=new Int32Array(n*H_S), holes=[];
-  state.players.forEach((h,i)=>h.forEach((c,j)=>{H[i*H_S+j]=c===null?-1:c;if(c===null)holes.push(i*H_S+j);}));
+  state.players.forEach((h,i)=>h.forEach((c,j)=>{H[i*H_S+j]=c===null?-1:c;if(c===null&&!rangeP.includes(i))holes.push(i*H_S+j);}));
   const B=new Int32Array(5), bHoles=[];
   state.board.forEach((c,j)=>{B[j]=c===null?-1:c;if(c===null)bHoles.push(j);});
   const k=bHoles.length;
   const total=nCk(deck.length,k);
-  const exhaustive=holes.length===0&&total<=2e6&&total*n*(plo?60:21)<=4e7;
+  const exhaustive=!anyRange&&holes.length===0&&total<=2e6&&total*n*(plo?60:21)<=4e7;
+
+  /* range combos, minus anything blocked by known cards */
+  const RC=[];
+  for(const i of rangeP){
+    const list=[];
+    state.ranges[i].forEach(key=>classCombos(key).forEach(cb=>{if(!used.has(cb[0])&&!used.has(cb[1]))list.push(cb);}));
+    if(!list.length){results=null;render();$('status').textContent=`כל הידיים בטווח של שחקן ${i+1} חסומות על ידי הקלפים שנבחרו`;return;}
+    RC.push({p:i,list});
+  }
+  const fixedDead=new Uint8Array(52); used.forEach(c=>fixedDead[c]=1);
+  const dead=new Uint8Array(52);
+  let skipped=0;
 
   results={trials:0,eq:new Float64Array(n),win:new Float64Array(n),tie:new Float64Array(n)};
   const sc=new Int32Array(n);
@@ -457,6 +668,25 @@ function startCalc(){
           evalTrial();
         }
       }
+    } else if(anyRange){
+      const R=RC.length;
+      while(performance.now()-ts<35){
+        for(let q=0;q<200;q++){
+          dead.set(fixedDead);
+          let ok=true; const st=rng()%R;
+          for(let x=0;x<R&&ok;x++){
+            const rc=RC[(st+x)%R]; let tries=0, cb;
+            do{cb=rc.list[rng()%rc.list.length];}while((dead[cb[0]]||dead[cb[1]])&&++tries<60);
+            if(dead[cb[0]]||dead[cb[1]]){ok=false;break;}
+            dead[cb[0]]=dead[cb[1]]=1; H[rc.p*2]=cb[0]; H[rc.p*2+1]=cb[1];
+          }
+          if(!ok){skipped++;continue;}
+          for(let i=0;i<holes.length;i++){let c;do{c=rng()%52;}while(dead[c]);dead[c]=1;H[holes[i]]=c;}
+          for(let i=0;i<k;i++){let c;do{c=rng()%52;}while(dead[c]);dead[c]=1;B[bHoles[i]]=c;}
+          evalTrial();
+        }
+        if(skipped>50000&&results.trials<100) break;
+      }
     } else {
       while(performance.now()-ts<35){
         for(let q=0;q<200;q++){
@@ -469,8 +699,13 @@ function startCalc(){
       }
     }
     paintResults();
+    if(anyRange&&skipped>50000&&results.trials<100){
+      $('status').textContent='הטווחים חוסמים זה את זה כמעט לגמרי. הרחב את אחד הטווחים.';return;
+    }
     const done=exhaustive?idx>=total:(performance.now()-t0>=BUDGET||results.trials>=MAXT);
-    if(done){
+    if(done&&anyRange){
+      $('status').textContent=`סימולציה של ${nf.format(results.trials)} חלוקות מתוך הטווחים`;
+    } else if(done){
       $('status').textContent=exhaustive
         ?(k===0?'הבורד מלא, התוצאה סופית':`חישוב מדויק על כל ${nf.format(total)} הבורדים האפשריים`)
         :`סימולציה של ${nf.format(results.trials)} חלוקות אקראיות`;
