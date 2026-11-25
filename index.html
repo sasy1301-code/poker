@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>אחוזי פוקר</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E7EEE9; --surface:#FFFFFF; --felt:#1D5B43; --felt-deep:#154432;
+  --ink:#13221B; --muted:#5A6B62; --line:#C9D5CD; --accent:#B07F14;
+  --on-felt:#EAF3EE; --on-felt-muted:#A9C7B8;
+  --cardface:#FFFFFF; --cardink:#1A1A1A; --cardred:#C4202B; --slot:#2A6F55;
+  --focus:#B07F14;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme: dark;
+    --bg:#0E1C16; --surface:#16291F; --felt:#1B5340; --felt-deep:#123A2C;
+    --ink:#E6EEE9; --muted:#97AC9F; --line:#2A4136; --accent:#DDB04A;
+    --on-felt:#EAF3EE; --on-felt-muted:#9FC0AF;
+    --cardface:#F3F2EC; --cardink:#161616; --cardred:#C4202B; --slot:#26654D;
+    --focus:#DDB04A;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:"Rubik",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  background:var(--bg); color:var(--ink); font-size:16px; line-height:1.45;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding:0 14px 40px}
+
+header{padding:20px 0 14px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+h1{margin:0;font-size:1.7rem;font-weight:800;letter-spacing:-.01em}
+.toggle{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.toggle button{border:0;background:transparent;padding:7px 14px;border-radius:999px;font-weight:500;color:var(--muted)}
+.toggle button[aria-pressed="true"]{background:var(--felt);color:var(--on-felt)}
+
+.table{
+  background:radial-gradient(ellipse at 50% 30%, var(--felt) 0%, var(--felt-deep) 100%);
+  border-radius:22px; padding:16px 14px 18px; color:var(--on-felt);
+  box-shadow:inset 0 0 0 5px rgba(0,0,0,.18);
+}
+.board-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.board-head h2{margin:0;font-size:1rem;font-weight:500}
+.board-head span{font-size:.85rem;color:var(--on-felt-muted)}
+.board{display:flex;justify-content:center;gap:6px;direction:ltr}
+.board .gap{width:8px}
+
+.card{
+  width:46px;height:64px;border-radius:7px;border:0;padding:0;flex:none;
+  background:var(--cardface);color:var(--cardink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  line-height:1;box-shadow:0 1px 2px rgba(0,0,0,.35);direction:ltr;
+}
+.card .r{font-size:1.3rem;font-weight:700}
+.card .s{font-size:1.15rem;margin-top:2px}
+.card.red{color:var(--cardred)}
+.card.empty{background:transparent;border:2px dashed var(--line);color:var(--muted);box-shadow:none}
+.table .card.empty{border-color:rgba(255,255,255,.35);color:var(--on-felt-muted);background:var(--slot)}
+.card.empty .r{font-weight:500;font-size:1.1rem}
+.card.active{outline:3px solid var(--accent);outline-offset:2px}
+.board .card{width:52px;height:72px}
+
+.players{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.player{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:12px;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;
+}
+.player.lead{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.p-top{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center}
+.p-name{font-weight:500}
+.p-hand{color:var(--muted);font-size:.85rem;margin-inline-start:6px}
+.remove{border:0;background:transparent;color:var(--muted);font-size:1.3rem;line-height:1;padding:2px 6px;border-radius:6px}
+.hand{display:flex;gap:4px;direction:ltr}
+.res{text-align:start;min-width:0}
+.eq{font-size:1.9rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.05}
+.eq small{font-size:1rem;font-weight:500}
+.wt{font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{grid-column:1 / -1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--felt);width:0;transition:width .25s}
+.player.lead .bar i{background:var(--accent)}
+.outs{grid-column:1 / -1;font-size:.88rem;color:var(--muted);padding-top:4px}
+.outs b{color:var(--ink);font-size:1rem}
+.olist{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;direction:ltr;justify-content:flex-end}
+.oc{background:var(--cardface);color:var(--cardink);border:1px solid var(--line);border-radius:5px;padding:2px 5px;font-weight:500;font-size:.85rem}
+.oc.red{color:var(--cardred)}
+
+.status{margin:14px 2px 0;font-size:.9rem;color:var(--muted);min-height:1.3em}
+.actions{display:flex;gap:8px;margin-top:12px}
+.btn{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px;font-weight:500}
+.btn.primary{background:var(--felt);border-color:var(--felt);color:var(--on-felt)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.hint{font-size:.85rem;color:var(--muted);margin:14px 2px 0}
+
+/* picker sheet */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s}
+.backdrop.open{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;background:var(--surface);color:var(--ink);
+  border-radius:18px 18px 0 0;padding:14px 10px calc(14px + env(safe-area-inset-bottom));
+  transform:translateY(105%);transition:transform .22s ease;max-width:680px;margin:0 auto;
+  box-shadow:0 -6px 24px rgba(0,0,0,.25)
+}
+.sheet.open{transform:none}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin:0 4px 10px}
+.sheet-head h3{margin:0;font-size:1rem;font-weight:500}
+.sheet-head .btns{display:flex;gap:6px}
+.sheet-head button{border:1px solid var(--line);background:transparent;border-radius:9px;padding:6px 11px;font-size:.9rem}
+.grid{display:grid;grid-template-columns:repeat(13,1fr);gap:4px;direction:ltr}
+.pick{
+  border:1px solid var(--line);background:var(--cardface);color:var(--cardink);border-radius:6px;
+  padding:6px 0;display:flex;flex-direction:column;align-items:center;line-height:1.05;min-width:0
+}
+.pick.red{color:var(--cardred)}
+.pick b{font-size:.95rem}
+.pick span{font-size:.85rem}
+.pick:disabled{opacity:.18;cursor:not-allowed}
+.pick.current{outline:2px solid var(--accent)}
+
+@media (max-width:380px){
+  .card{width:40px;height:56px}.card .r{font-size:1.1rem}
+  .board .card{width:46px;height:64px}
+  .eq{font-size:1.6rem}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>אחוזי פוקר</h1>
+    <div class="toggle" role="group" aria-label="סוג משחק">
+      <button data-mode="nlh">הולדם</button>
+      <button data-mode="plo">אומהה 4 קלפים</button>
+    </div>
+  </header>
+
+  <section class="table" aria-label="בורד">
+    <div class="board-head"><h2>בורד</h2><span>פלופ, טרן, ריבר</span></div>
+    <div class="board" id="board"></div>
+  </section>
+
+  <div class="players" id="players"></div>
+  <p class="status" id="status" aria-live="polite"></p>
+
+  <div class="actions">
+    <button class="btn" id="add">הוסף שחקן</button>
+    <button class="btn" id="reset">נקה הכול</button>
+  </div>
+  <p class="hint">קלף שלא נבחר נחשב כאקראי, כך שאפשר להשאיר שחקן בלי קלפים כדי לבדוק מול יד אקראית. החישוב מתעדכן אוטומטית. היציאות מוצגות בפלופ ובטרן כשהקלפים של כל השחקנים ידועים, והן סופרות את הקלף הבא בלבד.</p>
+</div>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet-head">
+    <h3 id="sheetTitle"></h3>
+    <div class="btns">
+      <button id="clearCard">הסר קלף</button>
+      <button id="closeSheet">סגור</button>
+    </div>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+/* ---------- cards ---------- */
+const RANKS='23456789TJQKA';
+const SUIT_SYM=['♠','♥','♦','♣'];
+const isRed=c=>{const s=c&3;return s===1||s===2;};
+const rankLabel=c=>{const r=RANKS[c>>2];return r==='T'?'10':r;};
+const HAND_NAMES=['קלף גבוה','זוג','שני זוגות','שלישייה','סטרייט','צבע','פול האוס','רביעייה','סטרייט פלאש'];
+
+/* ---------- evaluator tables ---------- */
+const POP=new Uint8Array(8192), STR=new Uint8Array(8192), HIGH=new Int32Array(8192);
+for(let m=0;m<8192;m++){
+  let p=0,h=0;
+  for(let r=12;r>=0;r--) if(m&(1<<r)){p++;h=(h<<4)|r;}
+  POP[m]=p;
+  if(p===5){
+    HIGH[m]=h;
+    if(m===0x100F) STR[m]=4;
+    for(let t=12;t>=4;t--) if(m===(0x1F<<(t-4))) STR[m]=t+1;
+  }
+}
+const CNT=new Int8Array(13);
+function eval5(a,b,c,d,e){
+  const ra=a>>2,rb=b>>2,rc=c>>2,rd=d>>2,re=e>>2;
+  const mask=(1<<ra)|(1<<rb)|(1<<rc)|(1<<rd)|(1<<re);
+  if(POP[mask]===5){
+    const s=a&3;
+    const flush=(b&3)===s&&(c&3)===s&&(d&3)===s&&(e&3)===s;
+    const st=STR[mask];
+    if(st) return ((flush?8:4)<<20)|st;
+    return ((flush?5:0)<<20)|HIGH[mask];
+  }
+  CNT[ra]++;CNT[rb]++;CNT[rc]++;CNT[rd]++;CNT[re]++;
+  let quad=-1,trip=-1,p1=-1,p2=-1,kick=0;
+  for(let r=12;r>=0;r--){
+    const k=CNT[r]; if(!k) continue; CNT[r]=0;
+    if(k===4) quad=r; else if(k===3) trip=r;
+    else if(k===2){ if(p1<0)p1=r; else p2=r; }
+    else kick=(kick<<4)|r;
+  }
+  if(quad>=0) return (7<<20)|(quad<<4)|kick;
+  if(trip>=0&&p1>=0) return (6<<20)|(trip<<4)|p1;
+  if(trip>=0) return (3<<20)|(trip<<8)|kick;
+  if(p2>=0) return (2<<20)|(p1<<8)|(p2<<4)|kick;
+  return (1<<20)|(p1<<12)|kick;
+}
+function combos(n,k){const out=[],idx=[];(function rec(s){if(idx.length===k){out.push(idx.slice());return;}for(let i=s;i<n;i++){idx.push(i);rec(i+1);idx.pop();}})(0);return out;}
+const C7=combos(7,5).flat();
+const OP=combos(4,2).flat();   // 6 pairs
+const OT=combos(5,3).flat();   // 10 triples
+const T7=new Int32Array(7);
+function best7(){
+  let best=0;
+  for(let k=0;k<105;k+=5){
+    const s=eval5(T7[C7[k]],T7[C7[k+1]],T7[C7[k+2]],T7[C7[k+3]],T7[C7[k+4]]);
+    if(s>best)best=s;
+  }
+  return best;
+}
+function bestO(H,o,B){
+  let best=0;
+  for(let i=0;i<12;i+=2){
+    const h1=H[o+OP[i]],h2=H[o+OP[i+1]];
+    for(let j=0;j<30;j+=3){
+      const s=eval5(h1,h2,B[OT[j]],B[OT[j+1]],B[OT[j+2]]);
+      if(s>best)best=s;
+    }
+  }
+  return best;
+}
+/* best made hand with whatever is known (for labels) */
+function madeHand(hand,boardKnown,plo){return bestScore(hand,boardKnown,plo)>>20;}
+function bestScore(hand,boardKnown,plo){
+  let best=0;
+  if(plo){
+    for(const p of combos(4,2)) for(const t of combos(boardKnown.length,3)){
+      const s=eval5(hand[p[0]],hand[p[1]],boardKnown[t[0]],boardKnown[t[1]],boardKnown[t[2]]); if(s>best)best=s;
+    }
+  } else {
+    const all=hand.concat(boardKnown);
+    for(const c of combos(all.length,5)){const s=eval5(all[c[0]],all[c[1]],all[c[2]],all[c[3]],all[c[4]]);if(s>best)best=s;}
+  }
+  return best;
+}
+/* outs: next-card analysis on flop/turn when every hand is known */
+function computeOuts(){
+  const known=state.board.filter(c=>c!==null);
+  if(known.length!==3&&known.length!==4) return null;
+  if(!state.players.every(h=>h.every(c=>c!==null))) return null;
+  const plo=state.mode==='plo', n=state.players.length, used=usedCards();
+  const now=state.players.map(h=>bestScore(h,known,plo));
+  const top=Math.max(...now);
+  const res=state.players.map((h,i)=>({win:[],tie:0,leading:now[i]===top,soleLead:now[i]===top&&now.filter(x=>x===top).length===1}));
+  let unseen=0;
+  for(let c=0;c<52;c++){
+    if(used.has(c)) continue; unseen++;
+    const b=known.concat([c]);
+    const sc=state.players.map(h=>bestScore(h,b,plo));
+    const best=Math.max(...sc), nb=sc.filter(x=>x===best).length;
+    sc.forEach((s,i)=>{if(s===best){if(nb===1)res[i].win.push(c);else res[i].tie++;}});
+  }
+  return {res,unseen,street:known.length===3?'בטרן':'בריבר'};
+}
+
+/* ---------- state ---------- */
+const state={mode:'nlh',players:[],board:[null,null,null,null,null],active:null};
+const hs=()=>state.mode==='nlh'?2:4;
+function newPlayer(){return Array(hs()).fill(null);}
+state.players=[newPlayer(),newPlayer()];
+let results=null; // [{eq,win,tie}]
+
+function usedCards(){const s=new Set();state.players.forEach(h=>h.forEach(c=>c!==null&&s.add(c)));state.board.forEach(c=>c!==null&&s.add(c));return s;}
+function getSlot(a){return a.type==='b'?state.board[a.j]:state.players[a.i][a.j];}
+function setSlot(a,v){if(a.type==='b')state.board[a.j]=v;else state.players[a.i][a.j]=v;}
+
+/* ---------- rendering ---------- */
+const $=id=>document.getElementById(id);
+function cardHTML(c,attrs,active){
+  if(c===null) return `<button class="card empty${active?' active':''}" ${attrs} aria-label="בחר קלף"><span class="r">?</span></button>`;
+  return `<button class="card${isRed(c)?' red':''}${active?' active':''}" ${attrs} aria-label="${rankLabel(c)} ${SUIT_SYM[c&3]}"><span class="r">${rankLabel(c)}</span><span class="s">${SUIT_SYM[c&3]}</span></button>`;
+}
+function isActive(type,i,j){const a=state.active;return a&&a.type===type&&a.j===j&&(type==='b'||a.i===i);}
+
+function render(){
+  document.querySelectorAll('.toggle button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===state.mode));
+  let bh='';
+  state.board.forEach((c,j)=>{ if(j===3||j===4) bh+='<span class="gap"></span>'; bh+=cardHTML(c,`data-b="${j}"`,isActive('b',0,j)); });
+  $('board').innerHTML=bh;
+
+  const known=state.board.filter(c=>c!==null);
+  const plo=state.mode==='plo';
+  const outs=computeOuts();
+  $('players').innerHTML=state.players.map((h,i)=>{
+    let handName='';
+    if(known.length>=3&&h.every(c=>c!==null)) handName=HAND_NAMES[madeHand(h,known,plo)];
+    let outsHTML='';
+    if(outs){
+      const o=outs.res[i], w=o.win.length;
+      const head=o.soleLead
+        ? `מוביל כרגע. <b>${w}</b> מתוך ${outs.unseen} קלפים ישאירו אותו מנצח ${outs.street}`
+        : `יציאות לניצחון ${outs.street}: <b>${w}</b> מתוך ${outs.unseen}`;
+      const tie=o.tie?`, ועוד ${o.tie} לתיקו`:'';
+      const list=(!o.soleLead&&w>0)?`<div class="olist">${o.win.map(c=>`<span class="oc${isRed(c)?' red':''}">${rankLabel(c)}${SUIT_SYM[c&3]}</span>`).join('')}</div>`:'';
+      outsHTML=`<div class="outs">${head}${tie}${list}</div>`;
+    }
+    return `<div class="player" id="pl-${i}">
+      <div class="p-top"><div><span class="p-name">שחקן ${i+1}</span><span class="p-hand">${handName}</span></div>
+      ${state.players.length>2?`<button class="remove" data-rm="${i}" aria-label="הסר שחקן ${i+1}">×</button>`:''}</div>
+      <div class="hand">${h.map((c,j)=>cardHTML(c,`data-p="${i}" data-j="${j}"`,isActive('p',i,j))).join('')}</div>
+      <div class="res" id="res-${i}"><div class="eq">—</div><div class="wt">&nbsp;</div></div>
+      <div class="bar"><i id="bar-${i}"></i></div>
+      ${outsHTML}
+    </div>`;
+  }).join('');
+  $('add').disabled=state.players.length>=9;
+  paintResults();
+}
+function fmt(x){return x.toFixed(x>=10||x===0?1:2);}
+function paintResults(){
+  if(!results||results.trials===0) return;
+  const n=state.players.length; let lead=-1,best=-1;
+  for(let i=0;i<n;i++){const e=results.eq[i]/results.trials;if(e>best){best=e;lead=i;}}
+  for(let i=0;i<n;i++){
+    const el=$('res-'+i); if(!el) continue;
+    const t=results.trials, eq=results.eq[i]/t*100, w=results.win[i]/t*100, ti=results.tie[i]/t*100;
+    el.innerHTML=`<div class="eq">${fmt(eq)}<small>%</small></div><div class="wt">ניצחון ${fmt(w)}%  תיקו ${fmt(ti)}%</div>`;
+    $('bar-'+i).style.width=eq+'%';
+    $('pl-'+i).classList.toggle('lead',i===lead&&n>1);
+  }
+}
+
+/* ---------- picker ---------- */
+function openPicker(a){state.active=a;render();buildGrid();$('sheet').classList.add('open');$('backdrop').classList.add('open');}
+function closePicker(){state.active=null;$('sheet').classList.remove('open');$('backdrop').classList.remove('open');render();}
+function slotTitle(a){
+  if(a.type==='b'){const n=['פלופ 1','פלופ 2','פלופ 3','טרן','ריבר'][a.j];return 'בורד, '+n;}
+  return `שחקן ${a.i+1}, קלף ${a.j+1}`;
+}
+function buildGrid(){
+  const a=state.active; if(!a) return;
+  $('sheetTitle').textContent=slotTitle(a);
+  const cur=getSlot(a); $('clearCard').style.visibility=cur===null?'hidden':'visible';
+  const used=usedCards(); let g='';
+  for(const s of [0,1,3,2]) for(let r=12;r>=0;r--){
+    const c=r*4+s, dis=used.has(c)&&c!==cur;
+    g+=`<button class="pick${isRed(c)?' red':''}${c===cur?' current':''}" data-c="${c}" ${dis?'disabled':''} aria-label="${rankLabel(c)} ${SUIT_SYM[s]}"><b>${rankLabel(c)}</b><span>${SUIT_SYM[s]}</span></button>`;
+  }
+  $('grid').innerHTML=g;
+}
+function nextEmpty(a){
+  if(a.type==='b'){for(let j=0;j<5;j++) if(state.board[j]===null) return {type:'b',j};return null;}
+  const h=state.players[a.i]; for(let j=0;j<h.length;j++) if(h[j]===null) return {type:'p',i:a.i,j}; return null;
+}
+$('grid').addEventListener('click',e=>{
+  const b=e.target.closest('.pick'); if(!b||b.disabled) return;
+  setSlot(state.active,+b.dataset.c);
+  const nx=nextEmpty(state.active);
+  if(nx){state.active=nx;render();buildGrid();} else closePicker();
+  schedule();
+});
+$('clearCard').onclick=()=>{setSlot(state.active,null);render();buildGrid();schedule();};
+$('closeSheet').onclick=closePicker;
+$('backdrop').onclick=closePicker;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.active)closePicker();});
+
+$('board').addEventListener('click',e=>{const b=e.target.closest('[data-b]');if(b)openPicker({type:'b',j:+b.dataset.b});});
+$('players').addEventListener('click',e=>{
+  const rm=e.target.closest('[data-rm]');
+  if(rm){state.players.splice(+rm.dataset.rm,1);results=null;render();schedule();return;}
+  const c=e.target.closest('[data-p]');
+  if(c) openPicker({type:'p',i:+c.dataset.p,j:+c.dataset.j});
+});
+document.querySelectorAll('.toggle button').forEach(b=>b.onclick=()=>{
+  if(state.mode===b.dataset.mode) return;
+  state.mode=b.dataset.mode;
+  state.players=state.players.map(h=>{const n=newPlayer();for(let j=0;j<Math.min(h.length,n.length);j++)n[j]=h[j];return n;});
+  results=null;render();schedule();
+});
+$('add').onclick=()=>{if(state.players.length<9){state.players.push(newPlayer());results=null;render();schedule();}};
+$('reset').onclick=()=>{state.players=[newPlayer(),newPlayer()];state.board=[null,null,null,null,null];results=null;render();schedule();};
+
+/* ---------- calculation ---------- */
+let timer=null,runToken=0;
+function schedule(){clearTimeout(timer);runToken++;timer=setTimeout(startCalc,180);}
+function nCk(n,k){let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return Math.round(r);}
+const nf=new Intl.NumberFormat('he-IL');
+
+function startCalc(){
+  const tok=++runToken;
+  const n=state.players.length, H_S=hs(), plo=state.mode==='plo';
+  const used=usedCards();
+  if(used.size===0){results=null;render();$('status').textContent='בחרו קלפים כדי לראות אחוזים';return;}
+  const deck=[];for(let c=0;c<52;c++) if(!used.has(c)) deck.push(c);
+  const H=new Int32Array(n*H_S), holes=[];
+  state.players.forEach((h,i)=>h.forEach((c,j)=>{H[i*H_S+j]=c===null?-1:c;if(c===null)holes.push(i*H_S+j);}));
+  const B=new Int32Array(5), bHoles=[];
+  state.board.forEach((c,j)=>{B[j]=c===null?-1:c;if(c===null)bHoles.push(j);});
+  const k=bHoles.length;
+  const total=nCk(deck.length,k);
+  const exhaustive=holes.length===0&&total<=2e6&&total*n*(plo?60:21)<=4e7;
+
+  results={trials:0,eq:new Float64Array(n),win:new Float64Array(n),tie:new Float64Array(n)};
+  const sc=new Int32Array(n);
+  function evalTrial(){
+    let best=-1,nb=0;
+    for(let p=0;p<n;p++){
+      let s;
+      if(plo) s=bestO(H,p*4,B);
+      else{T7[0]=H[p*2];T7[1]=H[p*2+1];T7[2]=B[0];T7[3]=B[1];T7[4]=B[2];T7[5]=B[3];T7[6]=B[4];s=best7();}
+      sc[p]=s; if(s>best){best=s;nb=1;} else if(s===best) nb++;
+    }
+    const share=1/nb;
+    for(let p=0;p<n;p++) if(sc[p]===best){ if(nb===1) results.win[p]++; else results.tie[p]++; results.eq[p]+=share; }
+    results.trials++;
+  }
+
+  let combo=null,idx=0;
+  if(exhaustive&&k>0){
+    combo=new Uint8Array(total*k); const ci=[];for(let i=0;i<k;i++)ci.push(i);
+    let w=0;
+    while(true){
+      for(let i=0;i<k;i++) combo[w++]=ci[i];
+      let i=k-1; while(i>=0&&ci[i]===deck.length-k+i) i--;
+      if(i<0) break; ci[i]++; for(let j=i+1;j<k;j++) ci[j]=ci[j-1]+1;
+    }
+  }
+  let seed=(Date.now()^0x9E3779B9)>>>0||1;
+  const rng=()=>{seed^=seed<<13;seed>>>=0;seed^=seed>>>17;seed^=seed<<5;seed>>>=0;return seed;};
+  const work=deck.slice(), need=holes.length+k, L=work.length;
+  const t0=performance.now(), BUDGET=1600, MAXT=400000;
+  $('status').textContent='מחשב...';
+
+  function step(){
+    if(tok!==runToken) return;
+    const ts=performance.now();
+    if(exhaustive){
+      while(idx<total&&performance.now()-ts<35){
+        for(let q=0;q<400&&idx<total;q++,idx++){
+          const o=idx*k; for(let i=0;i<k;i++) B[bHoles[i]]=deck[combo[o+i]];
+          evalTrial();
+        }
+      }
+    } else {
+      while(performance.now()-ts<35){
+        for(let q=0;q<200;q++){
+          for(let i=0;i<need;i++){const j=i+rng()%(L-i);const t=work[i];work[i]=work[j];work[j]=t;}
+          let w=0;
+          for(let i=0;i<holes.length;i++) H[holes[i]]=work[w++];
+          for(let i=0;i<k;i++) B[bHoles[i]]=work[w++];
+          evalTrial();
+        }
+      }
+    }
+    paintResults();
+    const done=exhaustive?idx>=total:(performance.now()-t0>=BUDGET||results.trials>=MAXT);
+    if(done){
+      $('status').textContent=exhaustive
+        ?(k===0?'הבורד מלא, התוצאה סופית':`חישוב מדויק על כל ${nf.format(total)} הבורדים האפשריים`)
+        :`סימולציה של ${nf.format(results.trials)} חלוקות אקראיות`;
+    } else {
+      $('status').textContent=exhaustive?`מחשב... ${Math.round(idx/total*100)}%`:`מחשב... ${nf.format(results.trials)} חלוקות`;
+      setTimeout(step,0);
+    }
+  }
+  step();
+}
+
+render();
+$('status').textContent='בחרו קלפים כדי לראות אחוזים';
+</script>
+</body>
+</html>
