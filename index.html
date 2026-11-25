@@ -90,6 +90,8 @@ h1{margin:0;font-size:1.7rem;font-weight:800;letter-spacing:-.01em}
 .olist{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;direction:ltr;justify-content:flex-end}
 .oc{background:var(--cardface);color:var(--cardink);border:1px solid var(--line);border-radius:5px;padding:2px 5px;font-weight:500;font-size:.85rem}
 .oc.red{color:var(--cardred)}
+.odanger{margin-top:10px}
+.odanger .oc{border-color:var(--cardred)}
 
 .status{margin:14px 2px 0;font-size:.9rem;color:var(--muted);min-height:1.3em}
 .actions{display:flex;gap:8px;margin-top:12px}
@@ -259,14 +261,14 @@ function computeOuts(){
   const plo=state.mode==='plo', n=state.players.length, used=usedCards();
   const now=state.players.map(h=>bestScore(h,known,plo));
   const top=Math.max(...now);
-  const res=state.players.map((h,i)=>({win:[],tie:0,leading:now[i]===top,soleLead:now[i]===top&&now.filter(x=>x===top).length===1}));
+  const res=state.players.map((h,i)=>({win:[],lose:[],tie:0,leading:now[i]===top,soleLead:now[i]===top&&now.filter(x=>x===top).length===1}));
   let unseen=0;
   for(let c=0;c<52;c++){
     if(used.has(c)) continue; unseen++;
     const b=known.concat([c]);
     const sc=state.players.map(h=>bestScore(h,b,plo));
     const best=Math.max(...sc), nb=sc.filter(x=>x===best).length;
-    sc.forEach((s,i)=>{if(s===best){if(nb===1)res[i].win.push(c);else res[i].tie++;}});
+    sc.forEach((s,i)=>{if(s===best){if(nb===1)res[i].win.push(c);else res[i].tie++;}else res[i].lose.push(c);});
   }
   return {res,unseen,street:known.length===3?'בטרן':'בריבר'};
 }
@@ -309,8 +311,14 @@ function render(){
         ? `מוביל כרגע. <b>${w}</b> מתוך ${outs.unseen} קלפים ישאירו אותו מנצח ${outs.street}`
         : `יציאות לניצחון ${outs.street}: <b>${w}</b> מתוך ${outs.unseen}`;
       const tie=o.tie?`, ועוד ${o.tie} לתיקו`:'';
-      const list=(!o.soleLead&&w>0)?`<div class="olist">${o.win.map(c=>`<span class="oc${isRed(c)?' red':''}">${rankLabel(c)}${SUIT_SYM[c&3]}</span>`).join('')}</div>`:'';
-      outsHTML=`<div class="outs">${head}${tie}${list}</div>`;
+      const chips=arr=>`<div class="olist">${arr.map(c=>`<span class="oc${isRed(c)?' red':''}">${rankLabel(c)}${SUIT_SYM[c&3]}</span>`).join('')}</div>`;
+      const list=w>0?chips(o.win):'';
+      let danger='';
+      if(o.soleLead){
+        const lose=o.lose;
+        if(lose.length) danger=`<div class="odanger">קלפים מסוכנים: <b>${lose.length}</b>${chips(lose)}</div>`;
+      }
+      outsHTML=`<div class="outs">${head}${tie}${list}${danger}</div>`;
     }
     return `<div class="player" id="pl-${i}">
       <div class="p-top"><div><span class="p-name">שחקן ${i+1}</span><span class="p-hand">${handName}</span></div>
